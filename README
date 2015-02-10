@@ -37,6 +37,17 @@ $ make test
 This will execute all of the binaries with arguments to make them
 produce XML output, captured into report-*.xml files.
 
+$ make coverage
+
+This will execute all coverage tests and produce the relative reports.
+Each file will have his own coverage report, but some overall report
+is also generated (in coverage.info and in coverage-report.xml).
+These overall reports are then used to populate a web interface that
+shows coverage stas (on /var/www/html/coverage, folder that can be exported
+by apache) with the command:
+
+$ make coverage-html
+
 When you're done, your can remove all built files by cleaning:
 
 $ make clean
@@ -60,3 +71,14 @@ cases by using a fixture.
 
 main.cpp:
 An all-in-one sample that shows various Boost.Test features.
+
+==================================
+
+========================================================================
+Integrating with Sonarqube
+========================================================================
+
+The resutls produced can be integrated in SonarQube using the Cxx plugin
+freely availabe for community use here:
+
+https://github.com/wenns/sonar-cxx
