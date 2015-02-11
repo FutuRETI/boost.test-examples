@@ -7,6 +7,8 @@ TESTDIR=test
 BINDIR=bin
 REPORTDIR=reports
 
+WEBDIR=/var/www/html/coverage
+
 all: $(addprefix $(BINDIR)/,$(TARGETS))
 
 $(BINDIR)/%: $(SRCDIR)/add.cpp $(SRCDIR)/add.h $(TESTDIR)/%.cpp
@@ -21,14 +23,15 @@ run-%: $(addprefix $(BINDIR)/,%)
 	-mv *.gcda $(REPORTDIR) 2>/dev/null
 
 coverage: test $(addprefix cov-,$(TARGETS))
-	lcov --capture --directory $(REPORTDIR) --output-file $(REPORTDIR)/test-coverage.info
+	lcov --capture --directory . --output-file $(REPORTDIR)/test-coverage.info --rc lcov_branch_coverage=1 --no-external
 	gcovr -x -r $(REPORTDIR) > $(REPORTDIR)/test-coverage.xml
 
 cov-%: $(addprefix $(BINDIR)/,%)
 	gcov --object-directory $(REPORTDIR) -r $(TESTDIR)/$(notdir $^).cpp
+	-mv *.gcov $(REPORTDIR) 2>/dev/null
 
 coverage-web: coverage
-	genhtml $(REPORTDIR)/test-coverage.info --output-directory /var/www/html/coverage
+	genhtml $(REPORTDIR)/test-coverage.info --rc lcov_branch_coverage=1 --output-directory $(WEBDIR)
 
 style:
 	vera++ -c $(REPORTDIR)/code-style.xml src/*.cpp
