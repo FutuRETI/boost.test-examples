@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Suites
 #include <boost/test/unit_test.hpp>
-#include "test-examples.h"
+#include "add.h"
 
 BOOST_AUTO_TEST_SUITE(Math)
 

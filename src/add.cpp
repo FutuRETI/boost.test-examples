@@ -1,4 +1,4 @@
-#include "test-examples.h"
+#include "add.h"
 
 int add(int i, int j)
 {

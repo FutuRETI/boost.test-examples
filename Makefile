@@ -1,29 +1,40 @@
 TARGETS=main hello suites fixtures assertions
 
-all: $(TARGETS)
+CXX=g++
+CPPFLAGS=-Wall
+SRCDIR=src
+TESTDIR=test
+BINDIR=bin
+REPORTDIR=reports
 
-test: $(TARGETS) $(addprefix run-,$(TARGETS))
+all: $(addprefix $(BINDIR)/,$(TARGETS))
+
+$(BINDIR)/%: $(SRCDIR)/add.cpp $(SRCDIR)/add.h $(TESTDIR)/%.cpp
+	$(CXX) -I$(SRCDIR) -o $(notdir $@) $(SRCDIR)/add.h $(SRCDIR)/add.cpp $(TESTDIR)/$(notdir $@).cpp -lboost_unit_test_framework -fprofile-arcs -ftest-coverage --coverage
+	-mv $(notdir $@) $(BINDIR)/
+	-mv *.gcno $(REPORTDIR)/
+
+test: $(addprefix $(BINDIR)/,$(TARGETS)) $(addprefix run-,$(TARGETS))
+
+run-%: $(addprefix $(BINDIR)/,%)
+	-$^ --log_format=XML --log_sink=$(REPORTDIR)/$(notdir $^)-report.xml --log_level=test_suite --report_level=no
+	-mv *.gcda $(REPORTDIR) 2>/dev/null
 
 coverage: test $(addprefix cov-,$(TARGETS))
-	lcov --capture --directory . --output-file test-coverage.info
-	gcovr -x -r . > test-coverage.xml
+	lcov --capture --directory $(REPORTDIR) --output-file $(REPORTDIR)/test-coverage.info
+	gcovr -x -r $(REPORTDIR) > $(REPORTDIR)/test-coverage.xml
+
+cov-%: $(addprefix $(BINDIR)/,%)
+	gcov --object-directory $(REPORTDIR) -r $(TESTDIR)/$(notdir $^).cpp
 
 coverage-web: coverage
+	genhtml $(REPORTDIR)/test-coverage.info --output-directory /var/www/html/coverage
 
 style:
-	vera++ -c code-style.xml src/*.cpp
-
-%: src/add.cpp src/test-examples.h test/%.cpp
-	$(CXX) -I./src -o $@ src/test-examples.h src/add.cpp test/$@.cpp -lboost_unit_test_framework -fprofile-arcs -ftest-coverage --coverage
-
-run-%: %
-	-./$^ --log_format=XML --log_sink=$(^)-report.xml --log_level=test_suite --report_level=no
-
-cov-%: %
-	gcov -r $(^).cpp
-
-clean:
-	rm -f $(TARGETS) *-report.xml *-report.xml.after_xslt *.gcov *.gcno *.gcda test-coverage.* *-style.xml
+	vera++ -c $(REPORTDIR)/code-style.xml src/*.cpp
 
 sonar: coverage style
 	sonar-runner
+
+clean:
+	rm -f $(addprefix $(BINDIR)/,$(TARGETS)) $(REPORTDIR)/*

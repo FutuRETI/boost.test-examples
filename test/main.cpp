@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <exception>
 #include <unistd.h>
-#include "test-examples.h"
+#include "add.h"
 
 BOOST_AUTO_TEST_SUITE(VariantsSuite)
 
