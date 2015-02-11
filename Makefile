@@ -12,14 +12,18 @@ WEBDIR=/var/www/html/coverage
 all: $(addprefix $(BINDIR)/,$(TARGETS))
 
 $(BINDIR)/%: $(SRCDIR)/add.cpp $(SRCDIR)/add.h $(TESTDIR)/%.cpp
-	$(CXX) -I$(SRCDIR) -o $(notdir $@) $(SRCDIR)/add.h $(SRCDIR)/add.cpp $(TESTDIR)/$(notdir $@).cpp -lboost_unit_test_framework -fprofile-arcs -ftest-coverage --coverage
+	$(CXX) -I$(SRCDIR) -o $(notdir $@) $(SRCDIR)/add.h $(SRCDIR)/add.cpp $(TESTDIR)/$(notdir $@).cpp -lboost_unit_test_framework -fprofile-arcs -ftest-coverage --coverage --debug
 	-mv $(notdir $@) $(BINDIR)/
 	-mv *.gcno $(REPORTDIR)/
 
-test: $(addprefix $(BINDIR)/,$(TARGETS)) $(addprefix run-,$(TARGETS))
+test: $(addprefix $(BINDIR)/,$(TARGETS)) $(addprefix run-,$(TARGETS)) $(addprefix val-,$(TARGETS))
 
 run-%: $(addprefix $(BINDIR)/,%)
-	-$^ --log_format=XML --log_sink=$(REPORTDIR)/$(notdir $^)-report.xml --log_level=test_suite --report_level=no
+	-$^ --log_format=XML --log_sink=$(REPORTDIR)/$(notdir $^)report.xml --log_level=test_suite -report_level=no
+	-mv *.gcda $(REPORTDIR) 2>/dev/null
+
+val-%: $(addprefix $(BINDIR)/,%)
+	-valgrind --xml=yes --xml-file=$(REPORTDIR)/$(notdir $^)-valgrind-report.xml $(BINDIR)/$(notdir $^)
 	-mv *.gcda $(REPORTDIR) 2>/dev/null
 
 coverage: test $(addprefix cov-,$(TARGETS))
@@ -36,7 +40,9 @@ coverage-web: coverage
 style:
 	vera++ -c $(REPORTDIR)/code-style.xml src/*.cpp
 
-sonar: coverage style
+quality: coverage style
+
+sonar: quality
 	sonar-runner
 
 clean:
